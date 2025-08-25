@@ -7,6 +7,9 @@
 #include <SD.h>
 
 const int DHT_pin = 4;
+const int SD_SDI_pin = 5;
+
+File myFile;
 
 // #define DHT_type DHT22;
 
@@ -19,24 +22,25 @@ RTC_DS3231 rtc; //type of rtc used
 
 void setup(){
 
-    //         //Find the default SPI pins for your board
-    //         Serial.begin(115200);
-    //         Serial.print("MOSI: ");
-    //         Serial.println(MOSI);
-    //         Serial.print("MISO: ");
-    //         Serial.println(MISO);
-    //         Serial.print("SCK: ");
-    //         Serial.println(SCK);
-    //         Serial.print("SS: ");
-    //         Serial.println(SS);  
+    //Find the default SPI pins for your board
+    Serial.begin(9600);
+
+    Serial.print("MOSI: ");
+    Serial.println(MOSI);
+    Serial.print("MISO: ");
+    Serial.println(MISO);
+    Serial.print("SCK: ");
+    Serial.println(SCK);
+    Serial.print("SS: ");
+    Serial.println(SS);  
 
     pinMode(DHT_pin, INPUT);
 
-    Serial.begin(9600);
     rtc.begin();
     dht.begin();
+    //SD.begin(SD_SDI_pin);
 
-    // rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
 
     if (rtc.lostPower()){
         // set to date and time sketch was compiled
@@ -48,6 +52,31 @@ void setup(){
     else {
         Serial.println("RTC running with correct time");
     }
+
+    if (!SD.begin(SD_SDI_pin)){
+        while (1){
+            Serial.println(F("SD CARD FAILED, OR NOT PRESENT!"));
+            delay(1000);
+        }
+    }
+    
+    Serial.println(F("SD CARD INITIALIZED."));
+
+    
+    if (!SD.exists("/esp32.txt")) {
+        Serial.println(F("esp32.txt doesn't exist. Creating esp32.txt file..."));
+        // create a new file by opening a new file and immediately close it
+        myFile = SD.open("/esp32.txt", FILE_WRITE);
+        myFile.close();
+    }
+
+    // recheck if file is created or not
+    if (SD.exists("/esp32.txt"))
+        Serial.println(F("esp32.txt exists on SD Card."));
+    else
+        Serial.println(F("esp32.txt doesn't exist on SD Card."));
+
+    
 }
 
 void loop(){
@@ -73,15 +102,74 @@ void loop(){
     }
 
     hum = dht.readHumidity();
-    temp = dht.readTemperature();
+    temp = dht.readTemperature(1);
 
-    Serial.println("humidity: ");
-    Serial.print(hum);
-    Serial.println("Temp: ");
-    Serial.print(temp);
+    Serial.print("humidity: ");
+    Serial.println(hum);
+    Serial.print("Temp: ");
+    Serial.println(temp);
+
+    myFile = SD.open("/esp32.txt", FILE_WRITE);
+
+    if (myFile) {
+        myFile.print("time: "); //write in the time
+        myFile.print(now.year(), DEC);
+        myFile.print('/');
+        myFile.print(now.month(), DEC);
+        myFile.print('/');
+        myFile.print(now.day(), DEC);
+        myFile.print(" ");
+        myFile.print(now.hour(), DEC);
+        myFile.print(':');
+        myFile.print(now.minute(), DEC);
+        myFile.print(':');
+        myFile.print(now.second(), DEC);
+
+        myFile.print(", humidity: "); // write a line to esp32.txt
+        myFile.print(hum); // write another line to esp32.txt
+        myFile.print(", temp(F): ");
+        myFile.println(temp); //newline after this
+        myFile.close();
+    } else {
+        Serial.print(F("SD Card: Issue encountered while attempting to open the file esp32.txt"));
+    }
 
     delay(1000);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
