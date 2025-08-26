@@ -5,9 +5,12 @@
 #include <RTClib.h>
 #include <Wire.h>
 #include <SD.h>
+#include <WiFi.h>
+#include "WifiPass.h"
 
 const int DHT_pin = 4;
 const int SD_SDI_pin = 5;
+
 
 File myFile;
 
@@ -19,6 +22,11 @@ float temp;
 DHT dht(DHT_pin, DHT22);
 
 RTC_DS3231 rtc; //type of rtc used
+
+// void initWiFi() {
+//     WiFi.mode(WIFI_STA);
+//     WiFi.begin(ssid, password);
+// }
 
 void setup(){
 
@@ -33,6 +41,7 @@ void setup(){
     Serial.println(SCK);
     Serial.print("SS: ");
     Serial.println(SS);  
+    Serial.println(ssid);
 
     pinMode(DHT_pin, INPUT);
 
@@ -111,7 +120,7 @@ void loop(){
 
     myFile = SD.open("/esp32.txt", FILE_WRITE);
 
-    if (myFile) {
+    if (myFile) { //MOVE TO ON THE MINUTE EVENTUALLY
         myFile.print("time: "); //write in the time
         myFile.print(now.year(), DEC);
         myFile.print('/');
@@ -136,120 +145,3 @@ void loop(){
 
     delay(1000);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// void setup() {
-
-//     // analogSetAttenuation(ADC_11db);
-
-
-//     rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-
-// }
-
-  
-// void loop() {
-
-
-// // Getting temperature
-// Serial.print(rtc.getTemperature());
-// Serial.println("ºC");
-
-// Serial.println();
-// delay(3000);
-
-// }
-
-
-/*
-PLAN
-
-button/other method to set time from computer
-
-figure out how to keep time ticking when powered off
-
-otherwise keep previously set timing when powered off using rtc battery
-
-connect device to serial and hit button to set correct time?
-
-temp measurements:
-    dht
-    rtc temp
-    thermistor?
-
-write to sd card temps every x minutes
-
-button/switch for recording mode vs standby
-
-just power on or off probably
-
-switch to change sampling rate??
-
-indicator LED?
-
-
-            https://arduino.stackexchange.com/questions/93880/ds3231-not-keeping-time-when-arduino-is-turned-off
-
-            #include <EEPROM.h>
-
-            // Assume the flag is stored at address 0
-            const int flagAddress = 0;
-
-            void setup() {
-            EEPROM.begin(512); // Adjust size as needed
-            bool timeSetFlag;
-            EEPROM.get(flagAddress, timeSetFlag); // Read the flag
-
-            if (!timeSetFlag) {
-                // Time-set command goes here
-                timeSetFlag = true; // Update flag
-                EEPROM.put(flagAddress, timeSetFlag);
-                EEPROM.commit(); // Save changes to EEPROM
-            }
-            }
-
-            void loop() {
-            // Main code
-            }
-
-https://lastminuteengineers.com/ds3231-rtc-arduino-tutorial/
-
-
-*/
