@@ -1,4 +1,5 @@
 // https://forum.arduino.cc/t/rtc-solved-how-to-set-date-and-time-permanent/183180/5
+//WiFi stuff https://randomnerdtutorials.com/esp32-web-server-arduino-ide/
 
 #include <Arduino.h>
 #include <DHT.h>
@@ -6,31 +7,27 @@
 #include <Wire.h>
 #include <SD.h>
 #include <WiFi.h>
-#include "WifiPass.h" //little library with my home wifi password;
+#include "WifiPass.h" //little library with my home wifi password
 
 const int DHT_pin = 4;
 const int SD_SDI_pin = 5;
-
-File myFile;
 
 float hum;
 float temp;
 bool logging = false;
 
-//WiFi stuff https://randomnerdtutorials.com/esp32-web-server-arduino-ide/
-WiFiServer server(80);
-String header;
-String output26State = "off";
 unsigned long current_time = millis();
 unsigned long previous_time = 0;
 const long timeout_time = 2000;
 
+String output26State = "off";
 const char* PARAM_INPUT_1 = "input1";
-
 const int output26 = 26;
 
+File dataFile;
+WiFiServer server(80);
+String header;
 DHT dht(DHT_pin, DHT22);
-
 RTC_DS3231 rtc; //type of rtc used
 
 void wifiConnect(void);
@@ -100,8 +97,8 @@ void setup(){
     if (!SD.exists("/esp32.txt")) {
         Serial.println(F("esp32.txt doesn't exist. Creating esp32.txt file..."));
         // create a new file by opening a new file and immediately close it
-        myFile = SD.open("/esp32.txt", FILE_WRITE);
-        myFile.close();
+        dataFile = SD.open("/esp32.txt", FILE_WRITE);
+        dataFile.close();
     }
 
     // recheck if file is created or not
@@ -138,29 +135,28 @@ void loop(){
     Serial.print("Temp: ");
     Serial.println(temp);
 
-    if (now.second() == 0){
-        Serial.println("on the minute");
+    if (now.second() == 0){ //every minute
 
-        myFile = SD.open("/esp32.txt", FILE_APPEND); //needs to be APPEND not WRITE or it wont work
+        dataFile = SD.open("/esp32.txt", FILE_APPEND); //needs to be APPEND not WRITE or it wont work
 
-        if (myFile) {
+        if (dataFile) {
           Serial.println("WRITING INTO FILE");
-          myFile.print("time: "); //write in the time
-          myFile.print(now.year(), DEC);
-          myFile.print('/');
-          myFile.print(now.month(), DEC);
-          myFile.print('/');
-          myFile.print(now.day(), DEC);
-          myFile.print(" ");
-          myFile.print(now.hour(), DEC);
-          myFile.print(':');
-          myFile.print(now.minute(), DEC); //no need to write seconds, always 0
+          dataFile.print("time: "); //write in the time
+          dataFile.print(now.year(), DEC);
+          dataFile.print('/');
+          dataFile.print(now.month(), DEC);
+          dataFile.print('/');
+          dataFile.print(now.day(), DEC);
+          dataFile.print(" ");
+          dataFile.print(now.hour(), DEC);
+          dataFile.print(':');
+          dataFile.print(now.minute(), DEC); //no need to write seconds, always 0
 
-          myFile.print(", humidity: "); // write a line to esp32.txt
-          myFile.print(hum); // write another line to esp32.txt
-          myFile.print(", temp(F): ");
-          myFile.println(temp); //newline after this
-          myFile.close();
+          dataFile.print(", humidity: "); // write a line to esp32.txt
+          dataFile.print(hum); // write another line to esp32.txt
+          dataFile.print(", temp(F): ");
+          dataFile.println(temp); //newline after this
+          dataFile.close();
         } 
         else {
           Serial.print(F("SD Card: Issue encountered while attempting to open the file esp32.txt"));
