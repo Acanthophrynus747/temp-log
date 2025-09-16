@@ -30,6 +30,15 @@ String header;
 DHT dht(DHT_pin, DHT22);
 RTC_DS3231 rtc; //type of rtc used
 
+enum State {
+    STANDBY = 0,
+    LOGGING = 1
+};
+
+State state;
+
+void Standby(void);
+void Logging(void);
 void wifiConnect(void);
 
 void setup(){
@@ -111,6 +120,16 @@ void setup(){
 }
 
 void loop(){
+
+    switch(state){
+        case(STANDBY):
+            Standby();
+        break;
+        
+        case(LOGGING):
+            Logging();
+        break;
+    }
 
     DateTime now = rtc.now();
 
@@ -259,5 +278,13 @@ void wifiConnect(){
   }
 
   Serial.println(output26State);
+
+}
+
+void Standby(){
+
+}
+
+void Logging(){
 
 }
